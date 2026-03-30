@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗣️Super Earn No.1 - Task Income Web Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --gold-primary: #00E676;
+            --gold-light: #B9F6CA;
+            --gold-dark: #00C853;
+            --gold-gradient: linear-gradient(135deg, #00C853 0%, #69F0AE 40%, #00E676 100%);
+            --dark-bg: #0A0F0D;
+            --card-bg: #111A15;
+            --card-border: #1E2E25;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --success: #22C55E;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .gold-gradient { background: var(--gold-gradient); }
+        .gold-text {
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 30px rgba(0, 230, 118, 0.08);
+        }
+
+        .btn-gold {
+            background: var(--gold-gradient);
+            color: #000;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 230, 118, 0.3);
+        }
+        .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--gold-primary);
+            color: var(--gold-primary);
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-outline:hover { background: var(--gold-primary); color: #000; }
+        
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover { background: #EF4444; color: white; border-color: #EF4444; }
+
+        .input-field {
+            width: 100%;
+            background: var(--dark-bg);
+            border: 2px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus { outline: none; border-color: var(--gold-primary); box-shadow: 0 0 20px rgba(0, 230, 118, 0.2); }
+        .input-field::placeholder { color: var(--text-secondary); }
+
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; } 90% { opacity: 0.3; } 100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; } }
+
+        .notice-bar {
+            background: linear-gradient(90deg, var(--gold-dark), var(--gold-primary), var(--gold-dark));
+            color: #000; padding: 10px; text-align: center; font-weight: 600; font-size: 14px;
+            position: sticky; top: 0; z-index: 40;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; right: -320px; width: 320px; height: 100vh;
+            background: var(--card-bg); border-left: 1px solid var(--card-border);
+            z-index: 1000; transition: right 0.3s ease; overflow-y: auto;
+        }
+        .sidebar.open { right: 0; }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; display: none; }
+        .overlay.active { display: block; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 15px; padding: 16px 20px;
+            border-bottom: 1px solid var(--card-border); cursor: pointer; transition: all 0.3s ease;
+        }
+        .menu-item:hover { background: rgba(0, 230, 118, 0.1); border-left: 3px solid var(--gold-primary); }
+
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .status-approved { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .status-rejected { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .status-completed { background: rgba(0, 230, 118, 0.15); color: #00E676; }
+
+        .wallet-card {
+            background: linear-gradient(145deg, #0E1812 0%, #162019 100%);
+            border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; margin-bottom: 15px;
+        }
+
+        .progress-bar { height: 8px; background: var(--card-border); border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--gold-gradient); border-radius: 10px; transition: width 0.5s ease; }
+
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 2000; display: none;
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px;
+            max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        .tab-btn {
+            padding: 10px 20px; background: transparent; border: none; color: var(--text-secondary);
+            cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.3s ease;
+        }
+        .tab-btn.active { color: var(--gold-primary); border-bottom-color: var(--gold-primary); }
+        .tab-btn:disabled { opacity: 0.4; cursor: not-allowed; border-bottom-color: transparent; }
+
+        .floating-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+        .particle { position: absolute; width: 4px; height: 4px; background: var(--gold-primary); border-radius: 50%; opacity: 0.3; animation: float 15s infinite; }
+
+        .glass-effect { background: rgba(17, 26, 21, 0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--dark-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--gold-primary); border-radius: 10px; }
+        
+        .loading-spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--gold-primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .task-completed-overlay { position: relative; }
+        .task-completed-overlay::after { content: ''; position: absolute; inset: 0; background: rgba(10, 15, 13, 0.6); border-radius: 16px; pointer-events: none; }
+
+        /* ক্লাউড সিঙ্ক ইন্ডিকেটর */
+        .cloud-sync-bar {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; color: var(--gold-primary);
+            padding: 4px 0;
+        }
+        .cloud-sync-bar .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--gold-primary);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+    <div class="floating-particles" id="particles"></div>
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+    
+    <div class="notice-bar" id="noticeBar" style="display: none;">
+        <i class="fas fa-bell mr-2"></i><span id="noticeText"></span>
+    </div>
+
+    <!--=================== LOGIN PAGE ===================-->
+    <div class="page active" id="loginPage">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md">
+                <div class="text-center mb-8">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full gold-gradient flex items-center justify-center shadow-lg shadow-green-500/20">
+                        <i class="fas fa-coins text-4xl text-black"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold gold-text">Super Earn BD</h1>
+                    <p class="text-gray-400 mt-2">Task Income Web Bot</p>
+                </div>
+
+                <div class="card">
+                    <div class="flex mb-6 border-b border-gray-700">
+                        <button class="tab-btn active flex-1" id="loginTabBtn" onclick="switchAuthTab('login')">Login</button>
+                        <button class="tab-btn flex-1" id="registerTabBtn" onclick="switchAuthTab('register')">Register</button>
+                    </div>
+
+                    <form id="loginForm" onsubmit="handleLogin(event)">
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Phone Number</label>
+                            <input type="text" class="input-field" id="loginPhone" placeholder="01XXXXXXXXX" required>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm text-gray-400 mb-2">Password</label>
+                            <input type="password" class="input-field" id="loginPassword" placeholder="Enter password" required>
+                        </div>
+                        <button type="submit" class="btn-gold w-full mb-4" id="loginBtn">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+
+                    <form id="registerForm" style="display: none;" onsubmit="handleRegister(event)">
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Full Name</label>
+                            <input type="text" class="input-field" id="regName" placeholder="Your full name" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Phone Number</label>
+                            <input type="text" class="input-field" id="regPhone" placeholder="01XXXXXXXXX" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Password</label>
+                            <input type="password" class="input-field" id="regPassword" placeholder="Create password" required>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm text-gray-400 mb-2">Referral Code (Optional)</label>
+                            <input type="text" class="input-field" id="regReferral" placeholder="REFXXXXXX">
+                        </div>
+                        <button type="submit" class="btn-gold w-full mb-4" id="regSubmitBtn">
+                            <i class="fas fa-user-plus"></i> Register
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <button onclick="showPage('adminLogin')" class="text-sm text-gray-500 hover:text-green-400 transition">
+                            <i class="fas fa-lock mr-1"></i>Admin Panel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--=================== ADMIN LOGIN PAGE ===================-->
+    <div class="page" id="adminLogin">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="w-full max-w-md">
+                <div class="text-center mb-8">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
+                        <i class="fas fa-user-shield text-4xl text-white"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-red-500">Admin Panel</h1>
+                    <p class="text-gray-400 mt-2">Authorized Access Only</p>
+                </div>
+                <div class="card border-red-500/30">
+                    <form onsubmit="handleAdminLogin(event)">
+                        <div class="mb-4">
+                            <label class="block text-sm text-gray-400 mb-2">Admin Username</label>
+                            <input type="text" class="input-field" id="adminUsername" placeholder="Admin username" required>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm text-gray-400 mb-2">Admin Password</label>
+                            <input type="password" class="input-field" id="adminPassword" placeholder="Admin password" required>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Admin Login
+                        </button>
+                    </form>
+                    <div class="text-center mt-4">
+                        <button onclick="showPage('loginPage')" class="text-sm text-gray-500 hover:text-green-400 transition">
+                            <i class="fas fa-arrow-left mr-1"></i>Back to User Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--=================== HOME PAGE ===================-->
+    <div class="page" id="homePage">
+        <header class="glass-effect sticky top-0 z-50 border-b border-gray-800">
+            <div class="flex items-center justify-between p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center">
+                        <i class="fas fa-coins text-black"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold gold-text">Super Earn BD</h1>
+                        <p class="text-xs text-gray-400" id="welcomeUser">Welcome, User</p>
+                    </div>
+                </div>
+                <button onclick="openSidebar()" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-gray-700 transition">
+                    <i class="fas fa-bars text-green-400"></i>
+                </button>
+            </div>
+            <!-- ক্লাউড সিঙ্ক ইন্ডিকেটর -->
+            <div class="px-4 pb-2">
+                <div class="cloud-sync-bar" id="cloudSyncBar">
+                    <span class="dot"></span>
+                    <span>Cloud Synced — Data Safe</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="activationWarning" class="p-4" style="display: none;">
+            <div class="card border-yellow-500/30 bg-yellow-500/10">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-yellow-500">Account Not Active</h3>
+                        <p class="text-sm text-gray-400">Activate to unlock all features</p>
+                    </div>
+                </div>
+                <button onclick="openActivationModal()" class="btn-gold w-full">
+                    <i class="fas fa-unlock"></i>Activate Account
+                </button>
+            </div>
+        </div>
+
+        <div class="p-4 relative z-10">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="card text-center">
+                    <i class="fas fa-wallet text-2xl text-green-400 mb-2"></i>
+                    <p class="text-xs text-gray-400">Main Balance</p>
+                    <p class="text-xl font-bold gold-text" id="mainBalance">0 TK</p>
+                </div>
+                <div class="card text-center">
+                    <i class="fas fa-users text-2xl text-green-500 mb-2"></i>
+                    <p class="text-xs text-gray-400">Active Refers</p>
+                    <p class="text-xl font-bold text-green-500" id="activeRefers">0</p>
+                </div>
+            </div>
+
+            <div class="card mb-6">
+                <h3 class="font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-share-alt text-green-400"></i>Refer & Earn
+                </h3>
+                <div class="bg-gray-900 rounded-xl p-3 mb-4">
+                    <p class="text-xs text-gray-400 mb-1">Your Referral Link</p>
+                    <div class="flex items-center gap-2">
+                        <input type="text" class="input-field text-sm" id="referralLink" readonly>
+                        <button onclick="copyReferralLink()" class="btn-outline px-3 py-2"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="text-center p-3 bg-green-500/10 rounded-xl">
+                        <p class="text-2xl font-bold text-green-500" id="activeRefCount">0</p>
+                        <p class="text-xs text-gray-400">Active Refer</p>
+                    </div>
+                    <div class="text-center p-3 bg-gray-500/10 rounded-xl">
+                        <p class="text-2xl font-bold text-gray-400" id="inactiveRefCount">0</p>
+                        <p class="text-xs text-gray-400">Inactive Refer</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-6">
+                <h3 class="font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-gift text-green-400"></i>Salary Progress
+                </h3>
+                <div class="space-y-4" id="salaryProgressContainer"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button onclick="openTaskModal()" class="card text-center py-6 hover:border-green-500 transition">
+                    <i class="fas fa-tasks text-3xl text-cyan-500 mb-2"></i>
+                    <p class="font-semibold">Task Income</p>
+                    <p class="text-xs text-gray-400 mt-1">Complete & Earn</p>
+                </button>
+                <button onclick="openJobModal('gmail')" class="card text-center py-6 hover:border-green-500 transition">
+                    <i class="fab fa-google text-3xl text-red-500 mb-2"></i>
+                    <p class="font-semibold">Gmail Sale</p>
+                    <p class="text-xs text-gray-400 mt-1">Sell & Earn</p>
+                </button>
+            </div>
+
+            <div class="card">
+                <h3 class="font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-wallet text-green-400"></i>My Wallets
+                </h3>
+                <div class="space-y-3" id="walletContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!--=================== ADMIN PANEL ===================-->
+    <div class="page" id="adminPanel">
+        <header class="glass-effect sticky top-0 z-50 border-b border-red-500/30">
+            <div class="flex items-center justify-between p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
+                        <i class="fas fa-user-shield text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-red-500">Admin Panel</h1>
+                        <p class="text-xs text-gray-400">Full Control Dashboard</p>
+                    </div>
+                </div>
+                <button onclick="adminLogout()" class="px-4 py-2 bg-red-500/20 text-red-500 rounded-lg text-sm hover:bg-red-500 hover:text-white transition">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Logout
+                </button>
+            </div>
+        </header>
+
+        <div class="p-4 relative z-10">
+            <div class="flex overflow-x-auto gap-2 mb-6 pb-2">
+                <button class="admin-tab active px-4 py-2 bg-green-500 text-black rounded-lg text-sm whitespace-nowrap" onclick="switchAdminTab('overview')">Overview</button>
+                <button class="admin-tab px-4 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="switchAdminTab('users')">Users</button>
+                <button class="admin-tab px-4 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="switchAdminTab('requests')">Requests</button>
+                <button class="admin-tab px-4 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="switchAdminTab('tasks')">Manage Tasks</button>
+                <button class="admin-tab px-4 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="switchAdminTab('jobs')">Job Settings</button>
+                <button class="admin-tab px-4 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="switchAdminTab('withdraw')">Withdraw</button>
+                <button class="admin-tab px-4 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="switchAdminTab('settings')">Settings</button>
+            </div>
+
+            <div id="adminOverview" class="admin-content">
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="card text-center"><i class="fas fa-users text-3xl text-blue-500 mb-2"></i><p class="text-2xl font-bold" id="totalUsers">0</p><p class="text-xs text-gray-400">Total Users</p></div>
+                    <div class="card text-center"><i class="fas fa-user-check text-3xl text-green-500 mb-2"></i><p class="text-2xl font-bold text-green-500" id="activeUsers">0</p><p class="text-xs text-gray-400">Active Users</p></div>
+                    <div class="card text-center"><i class="fas fa-clock text-3xl text-yellow-500 mb-2"></i><p class="text-2xl font-bold text-yellow-500" id="pendingRequests">0</p><p class="text-xs text-gray-400">Pending Requests</p></div>
+                    <div class="card text-center"><i class="fas fa-hand-holding-usd text-3xl text-purple-500 mb-2"></i><p class="text-2xl font-bold text-purple-500" id="totalWithdrawals">0</p><p class="text-xs text-gray-400">Total Withdrawals</p></div>
+                </div>
+                <div class="card mb-6">
+                    <h3 class="font-semibold mb-4">Update Notice</h3>
+                    <textarea class="input-field mb-3" id="adminNotice" rows="2" placeholder="Enter notice..."></textarea>
+                    <button onclick="updateNotice()" class="btn-gold w-full">Update Notice</button>
+                </div>
+                <div class="card">
+                    <h3 class="font-semibold mb-4">Recent Activity</h3>
+                    <div class="space-y-3 max-h-60 overflow-y-auto" id="recentActivity"></div>
+                </div>
+            </div>
+
+            <div id="adminUsers" class="admin-content" style="display: none;">
+                <div class="mb-4"><input type="text" class="input-field" id="searchUser" placeholder="Search user by phone..." oninput="searchUsers()"></div>
+                <div class="space-y-3" id="usersList"></div>
+            </div>
+
+            <div id="adminRequests" class="admin-content" style="display: none;">
+                <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <button class="request-filter active px-3 py-2 bg-green-500 text-black rounded-lg text-sm whitespace-nowrap" onclick="filterRequests('all')">All</button>
+                    <button class="request-filter px-3 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="filterRequests('activation')">Activation</button>
+                    <button class="request-filter px-3 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="filterRequests('withdraw')">Withdraw</button>
+                    <button class="request-filter px-3 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="filterRequests('task')">Task Submit</button>
+                    <button class="request-filter px-3 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="filterRequests('job')">Gmail Job</button>
+                </div>
+                <div class="space-y-3" id="requestsList"></div>
+            </div>
+
+            <div id="adminTasks" class="admin-content" style="display: none;">
+                <div class="card mb-4">
+                    <h3 class="font-semibold mb-4">Add New Task</h3>
+                    <div class="space-y-3">
+                        <input type="text" class="input-field" id="newTaskTitle" placeholder="Task Title (e.g. Subscribe Channel)">
+                        <textarea class="input-field" id="newTaskNotice" rows="2" placeholder="Task Instructions/Notice for users"></textarea>
+                        <input type="text" class="input-field" id="newTaskLink" placeholder="Task Link (https://...)">
+                        <input type="number" class="input-field" id="newTaskReward" placeholder="Reward Amount (TK)">
+                        <button onclick="addNewTask()" class="btn-gold w-full">Add Task</button>
+                    </div>
+                </div>
+                <div class="card"><h3 class="font-semibold mb-4">Active Tasks</h3><div class="space-y-3" id="adminTaskList">Loading...</div></div>
+            </div>
+
+            <div id="adminJobs" class="admin-content" style="display: none;">
+                <div class="space-y-4">
+                    <div class="card">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fab fa-google text-red-500"></i>Gmail Sale Settings</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="text-xs text-gray-400">Rate Per Gmail</label><input type="number" class="input-field" id="gmailRate" value="5"></div>
+                            <div><label class="text-xs text-gray-400">Min Withdraw</label><input type="number" class="input-field" id="gmailMinWithdraw" value="50"></div>
+                            <div><label class="text-xs text-gray-400">Daily Limit</label><input type="number" class="input-field" id="gmailDailyLimit" value="10"></div>
+                            <div><label class="text-xs text-gray-400">Status</label><select class="input-field" id="gmailStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+                        </div>
+                        <div class="mt-3 p-3 bg-gray-900 rounded-xl space-y-3">
+                            <div><label class="text-xs text-gray-400">Access Password</label><input type="text" class="input-field" id="gmailPassword" placeholder="Enter password shown to users"></div>
+                            <div><label class="text-xs text-gray-400">Commission (Referrer Bonus)</label><input type="number" class="input-field" id="gmailCommission" placeholder="Bonus for referrer"></div>
+                        </div>
+                        <button onclick="saveJobSettings('gmail')" class="btn-gold mt-3 w-full">Save Settings</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fas fa-users text-cyan-500"></i>Refer Wallet Settings</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="text-xs text-gray-400">Refer Bonus</label><input type="number" class="input-field" id="referBonus" value="10"></div>
+                            <div><label class="text-xs text-gray-400">Min Withdraw</label><input type="number" class="input-field" id="referMinWithdraw" value="50"></div>
+                        </div>
+                        <button onclick="saveJobSettings('refer')" class="btn-gold mt-3 w-full">Save Settings</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fas fa-money-bill-wave text-emerald-500"></i>Salary Wallet Settings</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="text-xs text-gray-400">Min Withdraw</label><input type="number" class="input-field" id="salaryMinWithdraw" value="50"></div>
+                            <div><label class="text-xs text-gray-400">Activation Fee</label><input type="number" class="input-field" id="activationFee" value="100"></div>
+                        </div>
+                        <button onclick="saveJobSettings('salary')" class="btn-gold mt-3 w-full">Save Settings</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-4 flex items-center gap-2"><i class="fas fa-tasks text-cyan-500"></i>Task Wallet Settings</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="text-xs text-gray-400">Min Withdraw</label><input type="number" class="input-field" id="taskMinWithdraw" value="50"></div>
+                        </div>
+                        <button onclick="saveJobSettings('task')" class="btn-gold mt-3 w-full">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="adminWithdraw" class="admin-content" style="display: none;">
+                <div class="card mb-4">
+                    <h3 class="font-semibold mb-4">Payment Methods</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 p-3 bg-gray-900 rounded-xl"><div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">BK</div><div class="flex-1"><input type="text" class="input-field text-sm" id="bkashNumber" placeholder="bKash Number"></div></div>
+                        <div class="flex items-center gap-3 p-3 bg-gray-900 rounded-xl"><div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">N</div><div class="flex-1"><input type="text" class="input-field text-sm" id="nagadNumber" placeholder="Nagad Number"></div></div>
+                    </div>
+                    <button onclick="savePaymentMethods()" class="btn-gold mt-3 w-full">Save Payment Methods</button>
+                </div>
+                <div class="card"><h3 class="font-semibold mb-4">Withdraw Requests</h3><div class="space-y-3 max-h-96 overflow-y-auto" id="withdrawRequestsList"></div></div>
+            </div>
+
+            <div id="adminSettings" class="admin-content" style="display: none;">
+                <div class="space-y-4">
+                    <div class="card">
+                        <h3 class="font-semibold mb-4">Admin Credentials</h3>
+                        <div class="space-y-3">
+                            <div><label class="text-xs text-gray-400">Username</label><input type="text" class="input-field" id="newAdminUsername" placeholder="New username"></div>
+                            <div><label class="text-xs text-gray-400">New Password</label><input type="password" class="input-field" id="newAdminPassword" placeholder="New password"></div>
+                        </div>
+                        <button onclick="updateAdminCredentials()" class="btn-gold mt-3 w-full">Update Credentials</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="font-semibold mb-4">Salary Bonuses</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="text-xs text-gray-400">5 Refer Bonus</label><input type="number" class="input-field" id="salary5" value="25"></div>
+                            <div><label class="text-xs text-gray-400">10 Refer Bonus</label><input type="number" class="input-field" id="salary10" value="50"></div>
+                            <div><label class="text-xs text-gray-400">15 Refer Bonus</label><input type="number" class="input-field" id="salary15" value="75"></div>
+                            <div><label class="text-xs text-gray-400">20 Refer Bonus</label><input type="number" class="input-field" id="salary20" value="100"></div>
+                        </div>
+                        <button onclick="saveSalaryBonuses()" class="btn-gold mt-3 w-full">Save Bonuses</button>
+                    </div>
+                    <div class="card border-red-500/50 bg-red-500/5">
+                        <h3 class="font-semibold mb-4 text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Danger Zone</h3>
+                        <p class="text-xs text-gray-400 mb-4">These actions are irreversible.</p>
+                        <div class="space-y-3">
+                            <button onclick="resetAllData()" class="w-full py-3 bg-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash mr-2"></i>Reset All Data</button>
+                            <button onclick="deleteInactiveUsers()" class="w-full py-3 bg-orange-500/20 text-orange-400 rounded-xl hover:bg-orange-500 hover:text-white transition"><i class="fas fa-user-minus mr-2"></i>Delete Inactive Users</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--=================== SIDEBAR ===================-->
+    <div class="sidebar" id="sidebar">
+        <div class="p-4 border-b border-gray-800 flex items-center justify-between">
+            <h2 class="font-bold gold-text">Menu</h2>
+            <button onclick="closeSidebar()" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center"><i class="fas fa-times text-gray-400"></i></button>
+        </div>
+        <div class="py-2">
+            <div class="menu-item" onclick="openTaskModal()"><i class="fas fa-tasks text-cyan-500 w-6"></i><span>Task Income</span></div>
+            <div class="menu-item" onclick="openJobModal('gmail')"><i class="fab fa-google text-red-500 w-6"></i><span>Gmail Sale</span></div>
+            <div class="menu-item" onclick="openWithdrawModal()"><i class="fas fa-wallet text-cyan-500 w-6"></i><span>Withdraw</span></div>
+            <div class="menu-item" onclick="openHistoryModal()"><i class="fas fa-history text-orange-500 w-6"></i><span>Total History</span></div>
+            <div class="menu-item" onclick="openTaskHistoryModal()"><i class="fas fa-clipboard-list text-blue-500 w-6"></i><span>Task History</span></div>
+            <div class="menu-item" onclick="openReferHistoryModal()"><i class="fas fa-users text-emerald-500 w-6"></i><span>Refer History</span></div>
+            <div class="menu-item" onclick="userLogout()"><i class="fas fa-sign-out-alt text-red-500 w-6"></i><span>Logout</span></div>
+        </div>
+    </div>
+
+    <!--=================== MODALS ===================-->
+    <div class="modal" id="activationModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold gold-text">Account Activation</h3>
+                <button onclick="closeModal('activationModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="mb-6">
+                <p class="text-gray-400 mb-4">Pay <span class="text-green-400 font-bold" id="activationAmount">100</span> Taka to activate</p>
+                <div class="space-y-3 mb-4">
+                    <label class="flex items-center gap-3 p-3 bg-gray-900 rounded-xl cursor-pointer"><input type="radio" name="paymentMethod" value="bkash" checked class="accent-green-500"><div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">BK</div><span>bKash</span><span class="ml-auto text-sm text-gray-400" id="bkashNum">01XXXXXXXXX</span></label>
+                    <label class="flex items-center gap-3 p-3 bg-gray-900 rounded-xl cursor-pointer"><input type="radio" name="paymentMethod" value="nagad" class="accent-green-500"><div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">N</div><span>Nagad</span><span class="ml-auto text-sm text-gray-400" id="nagadNum">01XXXXXXXXX</span></label>
+                </div>
+                <div><label class="text-sm text-gray-400 mb-2 block">Transaction ID</label><input type="text" class="input-field" id="transactionId" placeholder="Enter transaction ID"></div>
+            </div>
+            <button onclick="submitActivation()" class="btn-gold w-full"><i class="fas fa-check mr-2"></i>Submit Request</button>
+        </div>
+    </div>
+
+    <div class="modal" id="jobModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold gold-text" id="jobModalTitle">Job Title</h3>
+                <button onclick="closeModal('jobModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="jobModalContent"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="taskModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold gold-text">Available Tasks</h3>
+                <button onclick="closeModal('taskModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="taskModalContent" class="space-y-4"></div>
+        </div>
+    </div>
+    
+    <div class="modal" id="taskSubmitModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold gold-text" id="submitTaskTitle">Submit Task</h3>
+                <button onclick="closeModal('taskSubmitModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <p class="text-sm text-gray-400 mb-4" id="submitTaskNotice"></p>
+            <div class="mb-4"><label class="text-sm text-gray-400 mb-2 block">Job Completion Proof/Details</label><textarea class="input-field" id="taskProofDetails" rows="3" placeholder="Describe how you completed the task..."></textarea></div>
+            <input type="hidden" id="currentTaskId">
+            <input type="hidden" id="currentTaskReward">
+            <button onclick="confirmTaskSubmission()" class="btn-gold w-full">Submit for Review</button>
+        </div>
+    </div>
+
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold gold-text">Withdraw</h3>
+                <button onclick="closeModal('withdrawModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div id="withdrawContent"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="historyModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold gold-text">Total History</h3>
+                <button onclick="closeModal('historyModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                <button class="history-filter active px-3 py-1 bg-green-500 text-black rounded-lg text-sm whitespace-nowrap" onclick="filterHistory('all')">All</button>
+                <button class="history-filter px-3 py-1 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="filterHistory('pending')">Pending</button>
+                <button class="history-filter px-3 py-1 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="filterHistory('approved')">Approved</button>
+                <button class="history-filter px-3 py-1 bg-gray-800 text-gray-400 rounded-lg text-sm whitespace-nowrap" onclick="filterHistory('rejected')">Rejected</button>
+            </div>
+            <div class="space-y-3 max-h-96 overflow-y-auto" id="historyContent"></div>
+        </div>
+    </div>
+    
+    <div class="modal" id="taskHistoryModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold gold-text">Task History</h3>
+                <button onclick="closeModal('taskHistoryModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="space-y-3 max-h-96 overflow-y-auto" id="taskHistoryContent"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="referHistoryModal">
+        <div class="modal-content p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold gold-text">Refer History</h3>
+                <button onclick="closeModal('referHistoryModal')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="space-y-3 max-h-96 overflow-y-auto" id="referHistoryContent"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl text-white font-medium z-[3000] transition-all duration-300 opacity-0 translate-y-10 pointer-events-none"></div>
+
+    <!--=================== JAVASCRIPT ===================-->
+    <script>
+        // ===== FIREBASE CONFIG =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaYMQ8dPl2rNb4a42Efne1KLa5hEMcIiU",
+            authDomain: "dijital-super-earn.firebaseapp.com",
+            projectId: "dijital-super-earn",
+            storageBucket: "dijital-super-earn.firebasestorage.app",
+            messagingSenderId: "789598784773",
+            appId: "1:789598784773:web:6e99b00d9fe9922590bb6c",
+            measurementId: "G-NFBVPD0DGF"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ===== GLOBAL VARIABLES =====
+        let currentUser = null;
+        let currentJobType = null;
+        let appSettingsCache = null;
+        let cloudSyncInterval = null;
+
+        // ===== LIFETIME REGISTRATION LOCK =====
+        const REG_LOCK_KEYS = [
+            'se_device_reg_permanent',
+            'se_bd_lifetime_lock',
+            'super_earn_reg_done',
+            'se_reg_flag_v1',
+            'se_reg_ts'
+        ];
+
+        function isDeviceRegistered() {
+            return REG_LOCK_KEYS.some(key => localStorage.getItem(key));
+        }
+
+        function setDeviceRegisteredLifetime() {
+            const ts = Date.now().toString();
+            REG_LOCK_KEYS.forEach(key => { localStorage.setItem(key, ts); });
+            try {
+                const req = indexedDB.open('SuperEarnLockDB', 1);
+                req.onupgradeneeded = function(e) {
+                    const idb = e.target.result;
+                    if (!idb.objectStoreNames.contains('lock')) idb.createObjectStore('lock');
+                };
+                req.onsuccess = function(e) {
+                    const idb = e.target.result;
+                    if (idb.objectStoreNames.contains('lock')) {
+                        const tx = idb.transaction('lock', 'readwrite');
+                        tx.objectStore('lock').put(ts, 'registered');
+                    }
+                };
+            } catch(err) {}
+        }
+
+        async function isDeviceRegisteredIDB() {
+            return new Promise((resolve) => {
+                try {
+                    const req = indexedDB.open('SuperEarnLockDB', 1);
+                    req.onupgradeneeded = function(e) {
+                        const idb = e.target.result;
+                        if (!idb.objectStoreNames.contains('lock')) idb.createObjectStore('lock');
+                    };
+                    req.onsuccess = function(e) {
+                        const idb = e.target.result;
+                        if (idb.objectStoreNames.contains('lock')) {
+                            const tx = idb.transaction('lock', 'readonly');
+                            const getReq = tx.objectStore('lock').get('registered');
+                            getReq.onsuccess = function() { resolve(!!getReq.result); };
+                            getReq.onerror = function() { resolve(false); };
+                        } else { resolve(false); }
+                    };
+                    req.onerror = function() { resolve(false); };
+                } catch(err) { resolve(false); }
+            });
+        }
+
+        async function checkFullRegistrationLock() {
+            return isDeviceRegistered() || await isDeviceRegisteredIDB();
+        }
+
+        // ===== ক্লাউড ডাটা ভেরিফিকেশন =====
+        // এই ফাংশন ক্লাউড থেকে ইউজারের সম্পূর্ণ ডাটা টানবে — লোকাল নয়
+        async function verifyCloudData(userId) {
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (!doc.exists) return false;
+                const data = doc.data();
+                // ক্লাউডে submittedTasks আছে কিনা ভেরিফাই
+                if (!data.submittedTasks) {
+                    // পুরনো ইউজারদের জন্য — ক্লাউডে অ্যারে যোগ
+                    await db.collection('users').doc(userId).update({
+                        submittedTasks: []
+                    });
+                }
+                return true;
+            } catch(e) {
+                console.error('Cloud verify error:', e);
+                return false;
+            }
+        }
+
+        // ব্যাকগ্রাউন্ড ক্লাউড পিং — প্রতি ৩০ সেকেন্ডে ডাটা লাইভ আছে কিনা চেক
+        function startCloudPing() {
+            if (cloudSyncInterval) clearInterval(cloudSyncInterval);
+            cloudSyncInterval = setInterval(async () => {
+                if (!currentUser) return;
+                try {
+                    const doc = await db.collection('users').doc(currentUser.id).get();
+                    if (doc.exists) {
+                        const bar = document.getElementById('cloudSyncBar');
+                        if (bar) {
+                            bar.innerHTML = '<span class="dot"></span><span>Cloud Synced — Data Safe</span>';
+                            bar.style.color = '#00E676';
+                        }
+                    } else {
+                        const bar = document.getElementById('cloudSyncBar');
+                        if (bar) {
+                            bar.innerHTML = '<span class="dot" style="background:#EF4444;animation:none"></span><span style="color:#EF4444">Cloud Sync Issue</span>';
+                        }
+                    }
+                } catch(e) {
+                    const bar = document.getElementById('cloudSyncBar');
+                    if (bar) {
+                        bar.innerHTML = '<span class="dot" style="background:#F59E0B;animation:none"></span><span style="color:#F59E0B">Reconnecting...</span>';
+                    }
+                }
+            }, 30000);
+        }
+
+        function stopCloudPing() {
+            if (cloudSyncInterval) { clearInterval(cloudSyncInterval); cloudSyncInterval = null; }
+        }
+
+        // ===== UTILITY =====
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl text-white font-medium z-[3000] transition-all duration-300';
+            if (type === 'success') toast.classList.add('bg-green-500');
+            else if (type === 'error') toast.classList.add('bg-red-500');
+            else if (type === 'warning') toast.classList.add('bg-yellow-500', 'text-black');
+            else toast.classList.add('bg-blue-500');
+            toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none'); }, 3000);
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('bn-BD').format(amount) + ' TK';
+        }
+
+        // ===== PARTICLES =====
+        function createParticles() {
+            const container = document.getElementById('particles');
+            if (!container) return;
+            container.innerHTML = '';
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // ===== AUTH =====
+        async function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const loginTab = document.getElementById('loginTabBtn');
+            const regTab = document.getElementById('registerTabBtn');
+            
+            if (tab === 'register') {
+                const locked = await checkFullRegistrationLock();
+                if (locked) {
+                    showToast('এই ডিভাইসে ইতিমধ্যে একাউন্ট তৈরি করা হয়েছে!', 'error');
+                    return;
+                }
+            }
+            loginTab.classList.remove('active'); regTab.classList.remove('active');
+            if (tab === 'login') { loginForm.style.display = 'block'; registerForm.style.display = 'none'; loginTab.classList.add('active'); }
+            else { loginForm.style.display = 'none'; registerForm.style.display = 'block'; regTab.classList.add('active'); }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const referralCode = document.getElementById('regReferral').value.trim().toUpperCase();
+            
+            const locked = await checkFullRegistrationLock();
+            if (locked) { showToast('এই ডিভাইসে রেজিস্ট্রেশন সারাজীবনের জন্য বন্ধ!', 'error'); return; }
+
+            const phoneCheck = await db.collection('users').where('phone', '==', phone).get();
+            if (!phoneCheck.empty) { showToast('এই নম্বর দিয়ে ইতিমধ্যে রেজিস্ট্রেশন করা হয়েছে!', 'error'); return; }
+            
+            const generateReferralCode = () => {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let code = 'REF';
+                for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+                return code;
+            };
+
+            // ===== ক্লাউডে ডাটা সেভ — এটাই মূল স্টোরেজ =====
+            const newUser = {
+                name, phone, password,
+                referralCode: generateReferralCode(),
+                referredBy: referralCode || null,
+                isActive: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                wallets: { main: 0, gmail: 0, task: 0, refer: 0, salary: 0 },
+                stats: { activeRefers: 0, inactiveRefers: 0, totalRefers: 0 },
+                salaryClaimed: { 5: false, 10: false, 15: false, 20: false },
+                dailyTasks: {},
+                // ক্লাউডে টাস্ক ট্র্যাকিং — কখনো মুববে না, সারাজীবন থাকবে
+                submittedTasks: []
+            };
+            
+            await db.collection('users').add(newUser);
+            
+            if (referralCode) {
+                const referrerSnap = await db.collection('users').where('referralCode', '==', referralCode).get();
+                if (!referrerSnap.empty) {
+                    await referrerSnap.docs[0].ref.update({
+                        'stats.totalRefers': firebase.firestore.FieldValue.increment(1),
+                        'stats.inactiveRefers': firebase.firestore.FieldValue.increment(1)
+                    });
+                }
+            }
+            
+            // ডিভাইস লেভেল লক (শুধু রেজিস্ট্রেশন বন্ধ করতে)
+            setDeviceRegisteredLifetime();
+            
+            showToast('রেজিস্ট্রেশন সফল! ডাটা ক্লাউডে সেভ হয়েছে।', 'success');
+            switchAuthTab('login');
+            
+            const regBtn = document.getElementById('registerTabBtn');
+            regBtn.disabled = true;
+            regBtn.textContent = 'Registered';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            const snapshot = await db.collection('users').where('phone', '==', phone).where('password', '==', password).get();
+            if (snapshot.empty) { showToast('ফোন নম্বর বা পাসওয়ার্ড ভুল!', 'error'); return; }
+            
+            const userDoc = snapshot.docs[0];
+            
+            // ক্লাউড ডাটা ভেরিফিকেশন — submittedTasks ক্লাউড থেকে নিশ্চিত করা
+            await verifyCloudData(userDoc.id);
+            
+            // ক্লাউড থেকে ফ্রেশ ডাটা লোড
+            const freshDoc = await db.collection('users').doc(userDoc.id).get();
+            currentUser = { id: freshDoc.id, ...freshDoc.data() };
+            
+            localStorage.setItem('currentUserId', currentUser.id);
+            loadUserDashboard();
+            showToast('লগইন সফল! ক্লাউড থেকে ডাটা লোড হয়েছে।', 'success');
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const doc = await db.collection('settings').doc('admin').get();
+            const adminData = doc.exists ? doc.data() : { username: 'admin', password: 'admin123' };
+            if (username === adminData.username && password === adminData.password) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                loadAdminPanel();
+                showToast('Admin লগইন সফল!', 'success');
+            } else { showToast('Invalid credentials!', 'error'); }
+        }
+
+        function userLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUserId');
+            stopCloudPing();
+            closeSidebar();
+            showPage('loginPage');
+            showToast('Logout সফল!', 'success');
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('adminLoggedIn');
+            stopCloudPing();
+            showPage('loginPage');
+            showToast('Admin Logout সফল!', 'success');
+        }
+
+        // ===== USER DASHBOARD =====
+        async function loadUserDashboard() {
+            showPage('homePage');
+            document.getElementById('welcomeUser').textContent = `Welcome, ${currentUser.name}`;
+            
+            const warning = document.getElementById('activationWarning');
+            warning.style.display = currentUser.isActive ? 'none' : 'block';
+            
+            const settingsDoc = await db.collection('settings').doc('app').get();
+            appSettingsCache = settingsDoc.exists ? settingsDoc.data() : {};
+            
+            if (appSettingsCache.notice) {
+                document.getElementById('noticeBar').style.display = 'block';
+                document.getElementById('noticeText').textContent = appSettingsCache.notice;
+            }
+            
+            document.getElementById('referralLink').value = `https://t.me/@SuperEarnbd_bot?startapp=${currentUser.referralCode}`;
+            
+            // ক্লাউড থেকে রিয়েল-টাইম ডাটা সিঙ্ক শুরু
+            await updateUserStats();
+            updateWalletDisplay();
+            updateSalaryProgress();
+            
+            // ক্লাউড পিং শুরু — ডাটা লাইভ আছে কিনা মনিটর
+            startCloudPing();
+        }
+
+        // ===== ক্লাউড রিয়েল-টাইম সিঙ্ক =====
+        // Firestore onSnapshot — ক্লাউডে যেকোনো পরিবর্তন হলে ইনস্ট্যান্ট আপডেট
+        async function updateUserStats() {
+            if (!currentUser) return;
+            
+            db.collection('users').doc(currentUser.id).onSnapshot(doc => {
+                if (doc.exists) {
+                    // ক্লাউড থেকে ফ্রেশ ডাটা রিপ্লেস — লোকাল ক্যাশ নয়
+                    currentUser = { id: doc.id, ...doc.data() };
+                    
+                    // submittedTasks ক্লাউড থেকে আসছে কিনা নিশ্চিত
+                    if (!currentUser.submittedTasks) currentUser.submittedTasks = [];
+                    
+                    document.getElementById('activeRefers').textContent = currentUser.stats.activeRefers;
+                    document.getElementById('activeRefCount').textContent = currentUser.stats.activeRefers;
+                    document.getElementById('inactiveRefCount').textContent = currentUser.stats.inactiveRefers;
+                    updateWalletDisplay();
+                    updateSalaryProgress();
+                }
+            });
+        }
+
+        function updateWalletDisplay() {
+            if (!currentUser) return;
+            const mainBalance = Object.keys(currentUser.wallets).reduce((sum, key) => sum + (currentUser.wallets[key] || 0), 0);
+            document.getElementById('mainBalance').textContent = formatCurrency(mainBalance);
+            
+            const container = document.getElementById('walletContainer');
+            const jobSettings = appSettingsCache?.jobSettings || {};
+            const walletNames = {
+                gmail: { name: 'Gmail Wallet', icon: 'fab fa-google', color: 'text-red-500' },
+                task: { name: 'Task Wallet', icon: 'fas fa-tasks', color: 'text-cyan-500' },
+                refer: { name: 'Refer Wallet', icon: 'fas fa-users', color: 'text-green-500' },
+                salary: { name: 'Salary Wallet', icon: 'fas fa-money-bill-wave', color: 'text-emerald-500' }
+            };
+            
+            container.innerHTML = Object.keys(walletNames).map(key => {
+                const info = walletNames[key];
+                const settings = jobSettings[key] || {};
+                const minWithdraw = settings.minWithdraw || 50;
+                const value = currentUser.wallets[key] || 0;
+                return `
+                    <div class="wallet-card flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="${info.icon} text-xl ${info.color}"></i>
+                            <div><p class="text-sm font-medium">${info.name}</p><p class="text-xs text-gray-400">Min: ${minWithdraw} TK</p></div>
+                        </div>
+                        <p class="font-bold gold-text">${formatCurrency(value)}</p>
+                    </div>`;
+            }).join('');
+        }
+
+        function updateSalaryProgress() {
+            if (!currentUser) return;
+            const container = document.getElementById('salaryProgressContainer');
+            const bonuses = appSettingsCache?.salaryBonuses || { 5: 25, 10: 50, 15: 75, 20: 100 };
+            const activeRefers = currentUser.stats.activeRefers;
+            
+            container.innerHTML = Object.entries(bonuses).map(([refer, bonus]) => {
+                const referNum = parseInt(refer);
+                const progress = Math.min((activeRefers / referNum) * 100, 100);
+                const isUnlocked = activeRefers >= referNum;
+                const isClaimed = currentUser.salaryClaimed[refer];
+                return `
+                    <div class="p-3 rounded-xl ${isUnlocked ? 'bg-green-500/10 border border-green-500/30' : 'bg-gray-900'}">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2"><i class="fas fa-trophy ${isUnlocked ? 'text-green-400' : 'text-gray-500'}"></i><span class="text-sm">${refer} Active Refer</span></div>
+                            <span class="font-bold ${isUnlocked ? 'gold-text' : 'text-gray-500'}">${bonus} TK</span>
+                        </div>
+                        <div class="progress-bar mb-2"><div class="progress-fill" style="width: ${progress}%"></div></div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-400">${activeRefers}/${refer} refers</span>
+                            ${isUnlocked && !isClaimed ? `<button onclick="claimSalary('${refer}', ${bonus})" class="btn-gold px-3 py-1 text-xs">Claim</button>` : isClaimed ? `<span class="text-green-500"><i class="fas fa-check mr-1"></i>Claimed</span>` : `<span class="text-gray-500">Locked</span>`}
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function claimSalary(referKey, bonus) {
+            if (!currentUser || currentUser.salaryClaimed[referKey]) return;
+            await db.collection('users').doc(currentUser.id).update({
+                [`salaryClaimed.${referKey}`]: true,
+                'wallets.salary': firebase.firestore.FieldValue.increment(bonus)
+            });
+            showToast(`${bonus} TK Salary Bonus Claimed!`, 'success');
+        }
+
+        function copyReferralLink() {
+            navigator.clipboard.writeText(document.getElementById('referralLink').value).then(() => showToast('Referral Link Copied!', 'success'));
+        }
+
+        // ===== ACTIVATION =====
+        function openActivationModal() {
+            const settings = appSettingsCache || {};
+            document.getElementById('activationAmount').textContent = settings.activationFee || 100;
+            document.getElementById('bkashNum').textContent = settings.bkashNumber || '01XXXXXXXXX';
+            document.getElementById('nagadNum').textContent = settings.nagadNumber || '01XXXXXXXXX';
+            document.getElementById('activationModal').classList.add('active');
+        }
+
+        async function submitActivation() {
+            const transactionId = document.getElementById('transactionId').value.trim();
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            if (!transactionId) { showToast('Transaction ID দিন!', 'error'); return; }
+            const existingCheck = await db.collection('requests').where('userId', '==', currentUser.id).where('type', '==', 'activation').where('status', '==', 'pending').get();
+            if (!existingCheck.empty) { showToast('আপনার রিকুয়েস্ট ইতিমধ্যে আছে!', 'warning'); return; }
+            await db.collection('requests').add({
+                type: 'activation', userId: currentUser.id, userName: currentUser.name, userPhone: currentUser.phone,
+                transactionId, paymentMethod, amount: appSettingsCache?.activationFee || 100,
+                status: 'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            closeModal('activationModal');
+            document.getElementById('transactionId').value = '';
+            showToast('Activation Request Submitted!', 'success');
+        }
+
+        // ===== SIDEBAR & MODALS =====
+        function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('active'); }
+        function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('active'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+
+        // ===== TASK SYSTEM — ওয়ান-টাইম (ক্লাউড ট্র্যাকড) =====
+        async function openTaskModal() {
+            if (!currentUser) return;
+            closeSidebar();
+            if (!currentUser.isActive) { showToast('Account Activate করুন!', 'warning'); openActivationModal(); return; }
+            
+            const modalContent = document.getElementById('taskModalContent');
+            modalContent.innerHTML = '<div class="loading-spinner"></div>';
+            document.getElementById('taskModal').classList.add('active');
+            
+            // ক্লাউড থেকে ফ্রেশ টাস্ক লিস্ট
+            const snapshot = await db.collection('tasks').where('status', '==', 'active').get();
+            
+            if (snapshot.empty) {
+                modalContent.innerHTML = '<p class="text-center text-gray-500 py-8">কোনো টাস্ক এখন পাওয়া যাচ্ছে না।</p>';
+                return;
+            }
+            
+            // ক্লাউড থেকে submittedTasks নেওয়া হচ্ছে — লোকাল ক্যাশ নয়
+            const submittedTasks = currentUser.submittedTasks || [];
+            
+            let html = '';
+            let allCompleted = true;
+            
+            snapshot.forEach(doc => {
+                const task = doc.data();
+                const isCompleted = submittedTasks.includes(doc.id);
+                if (!isCompleted) allCompleted = false;
+                
+                if (isCompleted) {
+                    html += `
+                        <div class="card bg-gray-900 border-gray-800 task-completed-overlay relative">
+                            <div class="relative z-10">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-semibold text-gray-500 line-through">${task.title}</h4>
+                                    <span class="status-badge status-completed"><i class="fas fa-check mr-1"></i>Done</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3">${task.notice}</p>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-green-500/50">${task.reward} TK</span>
+                                    <span class="text-gray-600 text-xs">এই টাস্ক সম্পন্ন</span>
+                                </div>
+                            </div>
+                        </div>`;
+                } else {
+                    html += `
+                        <div class="card bg-gray-900 border-gray-800">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-semibold text-green-400">${task.title}</h4>
+                                <span class="text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full">${task.reward} TK</span>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-3">${task.notice}</p>
+                            <div class="flex gap-2">
+                                <a href="${task.link}" target="_blank" class="btn-outline flex-1 py-2 text-sm text-center"><i class="fas fa-external-link-alt mr-1"></i> Visit</a>
+                                <button onclick="openTaskSubmitForm('${doc.id}', '${task.title.replace(/'/g, "\\'")}', '${task.notice.replace(/'/g, "\\'")}', '${task.reward}')" class="btn-gold flex-1 py-2 text-sm"><i class="fas fa-paper-plane mr-1"></i> Submit</button>
+                            </div>
+                        </div>`;
+                }
+            });
+            
+            if (allCompleted) {
+                html += `<div class="text-center py-6"><i class="fas fa-check-circle text-5xl text-green-500/30 mb-3"></i><p class="text-gray-400">সব টাস্ক সম্পন্ন!</p><p class="text-xs text-gray-600 mt-1">নতুন টাস্ক আসলে আপডেট হবে</p></div>`;
+            }
+            
+            modalContent.innerHTML = html;
+        }
+
+        function openTaskSubmitForm(taskId, title, notice, reward) {
+            document.getElementById('submitTaskTitle').textContent = title;
+            document.getElementById('submitTaskNotice').textContent = notice;
+            document.getElementById('currentTaskId').value = taskId;
+            document.getElementById('currentTaskReward').value = reward;
+            document.getElementById('taskProofDetails').value = '';
+            document.getElementById('taskSubmitModal').classList.add('active');
+        }
+
+        async function confirmTaskSubmission() {
+            const taskId = document.getElementById('currentTaskId').value;
+            const reward = parseInt(document.getElementById('currentTaskReward').value);
+            const proof = document.getElementById('taskProofDetails').value.trim();
+            const title = document.getElementById('submitTaskTitle').textContent;
+            
+            if (!proof) { showToast('Please enter completion details/proof!', 'error'); return; }
+            
+            // ক্লাউড থেকে ফ্রেশ চেক — ডাবল ভেরিফিকেশন
+            const freshDoc = await db.collection('users').doc(currentUser.id).get();
+            const freshData = freshDoc.data();
+            const cloudSubmittedTasks = freshData.submittedTasks || [];
+            
+            if (cloudSubmittedTasks.includes(taskId)) {
+                showToast('এই টাস্ক আপনি ইতিমধ্যে সাবমিট করেছেন!', 'warning');
+                closeModal('taskSubmitModal');
+                closeModal('taskModal');
+                return;
+            }
+            
+            // ক্লাউডে রিকুয়েস্ট সেভ
+            await db.collection('requests').add({
+                type: 'task', taskId: taskId, taskTitle: title,
+                userId: currentUser.id, userName: currentUser.name, userPhone: currentUser.phone,
+                details: proof, amount: reward, status: 'pending',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // ক্লাউডে submittedTasks অ্যারেতে টাস্ক ID যোগ — লাইফটাইম ট্র্যাকিং
+            await db.collection('users').doc(currentUser.id).update({
+                submittedTasks: firebase.firestore.FieldValue.arrayUnion(taskId)
+            });
+            
+            closeModal('taskSubmitModal');
+            closeModal('taskModal');
+            showToast('টাস্ক সাবমিট সফল! ক্লাউডে সেভ হয়েছে।', 'success');
+        }
+
+        async function openTaskHistoryModal() {
+            if (!currentUser) return;
+            closeSidebar();
+            const container = document.getElementById('taskHistoryContent');
+            container.innerHTML = '<div class="loading-spinner"></div>';
+            document.getElementById('taskHistoryModal').classList.add('active');
+            
+            // ক্লাউড থেকে হিস্ট্রি লোড
+            const snapshot = await db.collection('requests').where('userId', '==', currentUser.id).where('type', '==', 'task').get();
+            if (snapshot.empty) { container.innerHTML = '<p class="text-center text-gray-500 py-8">কোনো টাস্ক হিস্ট্রি নেই।</p>'; return; }
+            container.innerHTML = '';
+            const docs = snapshot.docs.sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
+            docs.forEach(doc => {
+                const r = doc.data();
+                const time = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleString() : 'Processing';
+                container.innerHTML += `<div class="p-3 bg-gray-900 rounded-xl"><div class="flex justify-between items-center mb-1"><span class="font-medium text-sm">${r.taskTitle || 'Task'}</span><span class="status-badge status-${r.status}">${r.status}</span></div><p class="text-xs text-gray-400 truncate">${r.details}</p><div class="flex justify-between mt-2 text-xs"><span class="gold-text">${r.amount} TK</span><span class="text-gray-500">${time}</span></div></div>`;
+            });
+        }
+
+        // ===== GMAIL JOB =====
+        async function openJobModal(type) {
+            if (!currentUser) { showToast('Please login first!', 'error'); return; }
+            if (!currentUser.isActive) { showToast('Account Activate করুন!', 'warning'); closeSidebar(); openActivationModal(); return; }
+            closeSidebar();
+            currentJobType = type;
+            const jobSettings = appSettingsCache?.jobSettings || {};
+            const settings = jobSettings[type] || {};
+            const jobInfo = { gmail: { title: 'Gmail Sale', icon: 'fab fa-google', color: 'text-red-500' } };
+            const info = jobInfo[type];
+            document.getElementById('jobModalTitle').innerHTML = `<i class="${info.icon} ${info.color} mr-2"></i>${info.title}`;
+            
+            if (settings.status === 'inactive') {
+                document.getElementById('jobModalContent').innerHTML = `<div class="text-center py-8"><i class="fas fa-lock text-5xl text-gray-600 mb-4"></i><p class="text-gray-400">This job is currently unavailable</p></div>`;
+                document.getElementById('jobModal').classList.add('active');
+                return;
+            }
+            
+            const walletBalance = currentUser.wallets[type] || 0;
+            const minWithdraw = settings.minWithdraw || 50;
+            const rate = settings.rate || 5;
+            const dailyLimit = settings.dailyLimit || 10;
+            const today = new Date().toDateString();
+            const todayTasks = currentUser.dailyTasks?.[today]?.[type] || 0;
+            
+            let passwordSection = '';
+            if (type === 'gmail') {
+                const pass = settings.password || 'Not Set';
+                passwordSection = `<div class="mb-4 p-4 bg-green-500/10 rounded-xl border border-green-500/30"><p class="text-sm text-green-400 mb-1"><i class="fas fa-key mr-1"></i> Account Creation Password:</p><p class="text-xl font-bold text-white text-center my-2">${pass}</p><p class="text-xs text-gray-400">এই পাসওয়ার্ড দিয়ে অ্যাকাউন্ট তৈরি করুন।</p></div>`;
+            }
+
+            document.getElementById('jobModalContent').innerHTML = `
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2"><span class="text-gray-400">Wallet Balance</span><span class="font-bold gold-text">${formatCurrency(walletBalance)}</span></div>
+                    <div class="flex items-center justify-between mb-2"><span class="text-gray-400">Rate</span><span class="text-green-500">${rate} TK per task</span></div>
+                    <div class="flex items-center justify-between mb-2"><span class="text-gray-400">Today's Progress</span><span class="text-blue-500">${todayTasks}/${dailyLimit}</span></div>
+                    <div class="flex items-center justify-between"><span class="text-gray-400">Min Withdraw</span><span class="text-green-400">${minWithdraw} TK</span></div>
+                </div>
+                ${passwordSection}
+                <div class="mb-4"><label class="text-sm text-gray-400 mb-2 block">Gmail Address</label><input type="email" class="input-field" id="gmailEmail" placeholder="example@gmail.com"></div>
+                <div class="mb-4"><label class="text-sm text-gray-400 mb-2 block">Password</label><input type="text" class="input-field" id="gmailPass" placeholder="Account Password"></div>
+                <div class="flex gap-3 mb-6">
+                    <button onclick="submitJob()" class="btn-gold flex-1" ${todayTasks >= dailyLimit ? 'disabled style="opacity:0.5"' : ''}><i class="fas fa-paper-plane mr-2"></i>Submit</button>
+                    <button onclick="requestWithdraw('${type}')" class="btn-outline" ${walletBalance < minWithdraw ? 'disabled style="opacity:0.5"' : ''}><i class="fas fa-wallet mr-2"></i>Withdraw</button>
+                </div>
+                <div><h4 class="font-medium mb-3">Recent History</h4><div class="space-y-2 max-h-40 overflow-y-auto" id="jobHistory">Loading...</div></div>`;
+            document.getElementById('jobModal').classList.add('active');
+            loadJobHistory(type);
+        }
+        
+        async function loadJobHistory(type) {
+            const container = document.getElementById('jobHistory');
+            if (!container) return;
+            const snapshot = await db.collection('requests').where('userId', '==', currentUser.id).where('jobType', '==', type).get();
+            if (snapshot.empty) { container.innerHTML = '<p class="text-gray-500 text-sm text-center">No history</p>'; return; }
+            container.innerHTML = '';
+            snapshot.docs.sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0)).slice(0, 5).forEach(doc => {
+                const r = doc.data();
+                const time = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleDateString() : 'Pending';
+                container.innerHTML += `<div class="flex items-center justify-between p-2 bg-gray-900 rounded-lg"><div><p class="text-sm">${r.amount || 0} TK</p><p class="text-xs text-gray-500">${time}</p></div><span class="status-badge status-${r.status}">${r.status}</span></div>`;
+            });
+        }
+
+        async function submitJob() {
+            const email = document.getElementById('gmailEmail')?.value.trim();
+            const pass = document.getElementById('gmailPass')?.value.trim();
+            if (!email || !pass) { showToast('সব তথ্য পূরণ করুন!', 'error'); return; }
+            const details = `Email: ${email}, Pass: ${pass}`;
+            const jobSettings = appSettingsCache?.jobSettings || {};
+            const settings = jobSettings[currentJobType] || {};
+            const today = new Date().toDateString();
+            const todayTasks = currentUser.dailyTasks?.[today]?.[currentJobType] || 0;
+            if (todayTasks >= (settings.dailyLimit || 10)) { showToast('Daily limit reached!', 'warning'); return; }
+            await db.collection('requests').add({
+                type: 'job', jobType: currentJobType, userId: currentUser.id, userName: currentUser.name, userPhone: currentUser.phone,
+                details, amount: settings.rate || 5, status: 'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await db.collection('users').doc(currentUser.id).update({ [`dailyTasks.${today}.${currentJobType}`]: firebase.firestore.FieldValue.increment(1) });
+            closeModal('jobModal');
+            showToast('Task Submitted!', 'success');
+        }
+
+        async function requestWithdraw(type) {
+            if (!currentUser) return;
+            const settings = appSettingsCache?.jobSettings?.[type] || {};
+            if ((currentUser.wallets[type] || 0) < (settings.minWithdraw || 50)) { showToast(`Minimum ${settings.minWithdraw || 50} TK required!`, 'warning'); return; }
+            closeModal('jobModal');
+            openWithdrawModal(type);
+        }
+
+        function openWithdrawModal(type = null) {
+            if (!currentUser) return;
+            closeSidebar();
+            if (!currentUser.isActive) { showToast('Account Activate করুন!', 'warning'); openActivationModal(); return; }
+            const jobSettings = appSettingsCache?.jobSettings || {};
+            const walletTypes = [
+                { key: 'gmail', name: 'Gmail Wallet', icon: 'fab fa-google', color: 'text-red-500' },
+                { key: 'task', name: 'Task Wallet', icon: 'fas fa-tasks', color: 'text-cyan-500' },
+                { key: 'refer', name: 'Refer Wallet', icon: 'fas fa-users', color: 'text-green-500' },
+                { key: 'salary', name: 'Salary Wallet', icon: 'fas fa-money-bill-wave', color: 'text-emerald-500' }
+            ];
+            document.getElementById('withdrawContent').innerHTML = `<div class="space-y-3">${walletTypes.map(w => {
+                const settings = jobSettings[w.key] || {};
+                const minWithdraw = settings.minWithdraw || 50;
+                const balance = currentUser.wallets[w.key] || 0;
+                const canWithdraw = balance >= minWithdraw;
+                return `<div class="wallet-card flex items-center justify-between ${!canWithdraw ? 'opacity-50' : ''}"><div class="flex items-center gap-3"><i class="${w.icon} text-xl ${w.color}"></i><div><p class="text-sm font-medium">${w.name}</p><p class="text-xs text-gray-400">Min: ${minWithdraw} TK</p></div></div><div class="text-right"><p class="font-bold gold-text">${formatCurrency(balance)}</p>${canWithdraw ? `<button onclick="processWithdraw('${w.key}')" class="text-xs text-green-400 hover:underline">Withdraw</button>` : `<span class="text-xs text-gray-500">Not enough</span>`}</div></div>`;
+            }).join('')}</div>`;
+            document.getElementById('withdrawModal').classList.add('active');
+        }
+
+        function processWithdraw(type) {
+            if (!currentUser) return;
+            const settings = appSettingsCache?.jobSettings?.[type] || {};
+            const balance = currentUser.wallets[type] || 0;
+            document.getElementById('withdrawContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="text-center"><p class="text-gray-400 mb-2">Withdraw from ${type} wallet</p><p class="text-2xl font-bold gold-text">${formatCurrency(balance)}</p></div>
+                    <div><label class="text-sm text-gray-400 mb-2 block">Payment Method</label><select class="input-field" id="withdrawMethod"><option value="bkash">bKash - ${appSettingsCache?.bkashNumber || '01XXXXXXXXX'}</option><option value="nagad">Nagad - ${appSettingsCache?.nagadNumber || '01XXXXXXXXX'}</option></select></div>
+                    <div><label class="text-sm text-gray-400 mb-2 block">Your Number</label><input type="text" class="input-field" id="withdrawNumber" placeholder="01XXXXXXXXX" value="${currentUser.phone}"></div>
+                    <div><label class="text-sm text-gray-400 mb-2 block">Amount</label><input type="number" class="input-field" id="withdrawAmount" value="${balance}" max="${balance}" min="${settings.minWithdraw || 50}"></div>
+                    <div class="flex gap-3"><button onclick="closeModal('withdrawModal')" class="btn-outline flex-1">Cancel</button><button onclick="confirmWithdraw('${type}')" class="btn-gold flex-1">Confirm</button></div>
+                </div>`;
+        }
+
+        async function confirmWithdraw(type) {
+            const method = document.getElementById('withdrawMethod').value;
+            const number = document.getElementById('withdrawNumber').value.trim();
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+            if (!number || !amount) { showToast('All fields required!', 'error'); return; }
+            const settings = appSettingsCache?.jobSettings?.[type] || {};
+            const minWithdraw = settings.minWithdraw || 50;
+            const balance = currentUser.wallets[type] || 0;
+            if (amount < minWithdraw || amount > balance) { showToast('Invalid amount!', 'error'); return; }
+            await db.collection('requests').add({
+                type: 'withdraw', walletType: type, userId: currentUser.id, userName: currentUser.name, userPhone: currentUser.phone,
+                method, number, amount, status: 'pending', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await db.collection('users').doc(currentUser.id).update({ [`wallets.${type}`]: firebase.firestore.FieldValue.increment(-amount) });
+            closeModal('withdrawModal');
+            updateWalletDisplay();
+            showToast('Withdraw Request Submitted!', 'success');
+        }
+
+        async function openHistoryModal() {
+            if (!currentUser) return;
+            closeSidebar();
+            document.getElementById('historyModal').classList.add('active');
+            const snapshot = await db.collection('requests').where('userId', '==', currentUser.id).get();
+            const allData = [];
+            snapshot.forEach(doc => allData.push({id: doc.id, ...doc.data()}));
+            renderHistory(allData);
+        }
+
+        function renderHistory(data) {
+            const container = document.getElementById('historyContent');
+            if (data.length === 0) { container.innerHTML = '<p class="text-center text-gray-500 py-8">No history found</p>'; return; }
+            data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            container.innerHTML = data.map(r => {
+                const time = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleString() : 'Processing...';
+                return `<div class="p-3 bg-gray-900 rounded-xl"><div class="flex items-center justify-between mb-2"><span class="font-medium">${r.type.charAt(0).toUpperCase() + r.type.slice(1)}</span><span class="status-badge status-${r.status}">${r.status}</span></div><div class="flex items-center justify-between text-sm"><span class="text-gray-400">${r.jobType || r.taskTitle || r.walletType || r.paymentMethod || '-'}</span><span class="gold-text">${r.amount} TK</span></div><p class="text-xs text-gray-500 mt-1">${time}</p></div>`;
+            }).join('');
+        }
+
+        window.filterHistory = async (filter) => {
+            const buttons = document.querySelectorAll('.history-filter');
+            buttons.forEach(b => { b.classList.remove('active', 'bg-green-500', 'text-black'); b.classList.add('bg-gray-800', 'text-gray-400'); });
+            event.target.classList.add('active', 'bg-green-500', 'text-black');
+            event.target.classList.remove('bg-gray-800', 'text-gray-400');
+            let query = db.collection('requests').where('userId', '==', currentUser.id);
+            if (filter !== 'all') query = query.where('status', '==', filter);
+            const snapshot = await query.get();
+            const data = [];
+            snapshot.forEach(doc => data.push({id: doc.id, ...doc.data()}));
+            renderHistory(data);
+        };
+
+        async function openReferHistoryModal() {
+            if (!currentUser) return;
+            closeSidebar();
+            const container = document.getElementById('referHistoryContent');
+            container.innerHTML = '<div class="loading-spinner"></div>';
+            document.getElementById('referHistoryModal').classList.add('active');
+            const snapshot = await db.collection('users').where('referredBy', '==', currentUser.referralCode).get();
+            if (snapshot.empty) { container.innerHTML = '<p class="text-center text-gray-500 py-8">No referred users found</p>'; return; }
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                const time = u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+                container.innerHTML += `<div class="p-3 bg-gray-900 rounded-xl flex items-center justify-between"><div><p class="font-medium">${u.name}</p><p class="text-xs text-gray-400">${u.phone}</p><p class="text-xs text-gray-500 mt-1">Joined: ${time}</p></div><span class="status-badge ${u.isActive ? 'status-approved' : 'status-pending'}">${u.isActive ? 'Active' : 'Inactive'}</span></div>`;
+            });
+        }
+
+        // ===== ADMIN PANEL =====
+        async function loadAdminPanel() { showPage('adminPanel'); updateAdminStats(); loadAdminOverview(); }
+
+        async function updateAdminStats() {
+            const usersSnap = await db.collection('users').get();
+            const requestsSnap = await db.collection('requests').get();
+            let activeCount = 0, totalWithdraw = 0;
+            usersSnap.forEach(doc => { if(doc.data().isActive) activeCount++; });
+            requestsSnap.forEach(doc => { const d = doc.data(); if(d.type === 'withdraw' && d.status === 'approved') totalWithdraw += d.amount; });
+            document.getElementById('totalUsers').textContent = usersSnap.size;
+            document.getElementById('activeUsers').textContent = activeCount;
+            document.getElementById('pendingRequests').textContent = requestsSnap.docs.filter(d => d.data().status === 'pending').length;
+            document.getElementById('totalWithdrawals').textContent = totalWithdraw;
+        }
+
+        function switchAdminTab(tab) {
+            const tabs = document.querySelectorAll('.admin-tab');
+            tabs.forEach(t => { t.classList.remove('bg-green-500', 'text-black'); t.classList.add('bg-gray-800', 'text-gray-400'); });
+            event.target.classList.add('bg-green-500', 'text-black');
+            event.target.classList.remove('bg-gray-800', 'text-gray-400');
+            document.querySelectorAll('.admin-content').forEach(c => c.style.display = 'none');
+            document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+            if (tab === 'overview') loadAdminOverview();
+            if (tab === 'users') loadUsersList();
+            if (tab === 'requests') loadRequestsList();
+            if (tab === 'tasks') loadAdminTasks();
+            if (tab === 'jobs') loadJobSettings();
+            if (tab === 'withdraw') loadWithdrawSettings();
+            if (tab === 'settings') loadAdminSettings();
+        }
+
+        async function loadAdminOverview() {
+            const snapshot = await db.collection('activities').orderBy('timestamp', 'desc').limit(10).get();
+            const container = document.getElementById('recentActivity');
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const a = doc.data();
+                const time = a.timestamp?.seconds ? new Date(a.timestamp.seconds * 1000).toLocaleString() : 'N/A';
+                container.innerHTML += `<div class="flex items-center gap-3 p-3 bg-gray-900 rounded-xl"><div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center"><i class="fas fa-bell text-green-400 text-sm"></i></div><div class="flex-1"><p class="text-sm">${a.message}</p><p class="text-xs text-gray-500">${time}</p></div></div>`;
+            });
+            if (container.innerHTML === '') container.innerHTML = '<p class="text-gray-500">No recent activity</p>';
+        }
+
+        async function updateNotice() {
+            const notice = document.getElementById('adminNotice').value.trim();
+            if (!notice) return;
+            await db.collection('settings').doc('app').set({ notice }, { merge: true });
+            showToast('Notice Updated!', 'success');
+        }
+
+        async function loadUsersList() {
+            const snapshot = await db.collection('users').get();
+            renderUsersList(snapshot.docs);
+        }
+
+        function renderUsersList(docs) {
+            const container = document.getElementById('usersList');
+            if (docs.length === 0) { container.innerHTML = '<p class="text-center text-gray-500">No users found</p>'; return; }
+            container.innerHTML = '';
+            docs.forEach(doc => {
+                const u = doc.data();
+                container.innerHTML += `<div class="card flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-full ${u.isActive ? 'gold-gradient' : 'bg-gray-700'} flex items-center justify-center"><i class="fas fa-user ${u.isActive ? 'text-black' : 'text-gray-500'}"></i></div><div><p class="font-medium">${u.name}</p><p class="text-sm text-gray-400">${u.phone}</p></div></div><div class="flex items-center gap-2"><span class="status-badge ${u.isActive ? 'status-approved' : 'status-pending'}">${u.isActive ? 'Active' : 'Inactive'}</span><button onclick="toggleUserStatus('${doc.id}')" class="w-8 h-8 rounded-lg ${u.isActive ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}"><i class="fas ${u.isActive ? 'fa-user-minus' : 'fa-user-check'}"></i></button><button onclick="deleteUser('${doc.id}')" class="w-8 h-8 rounded-lg bg-red-500/20 text-red-500"><i class="fas fa-trash"></i></button></div></div>`;
+            });
+        }
+
+        async function searchUsers() {
+            const query = document.getElementById('searchUser').value.trim().toLowerCase();
+            const snapshot = await db.collection('users').get();
+            renderUsersList(snapshot.docs.filter(d => { const u = d.data(); return u.name.toLowerCase().includes(query) || u.phone.includes(query); }));
+        }
+
+        async function toggleUserStatus(userId) {
+            const ref = db.collection('users').doc(userId);
+            const doc = await ref.get();
+            const user = doc.data();
+            if (user.referredBy && !user.isActive) {
+                const referrerSnap = await db.collection('users').where('referralCode', '==', user.referredBy).get();
+                if (!referrerSnap.empty) {
+                    await referrerSnap.docs[0].ref.update({ 'stats.inactiveRefers': firebase.firestore.FieldValue.increment(-1), 'stats.activeRefers': firebase.firestore.FieldValue.increment(1) });
+                }
+            }
+            await ref.update({ isActive: !user.isActive });
+            updateAdminStats(); loadUsersList();
+            showToast('User status updated!', 'success');
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('Delete this user?')) return;
+            await db.collection('users').doc(userId).delete();
+            updateAdminStats(); loadUsersList();
+            showToast('User deleted!', 'success');
+        }
+
+        async function loadRequestsList() {
+            const snapshot = await db.collection('requests').where('status', '==', 'pending').get();
+            renderRequestsList(snapshot.docs);
+        }
+
+        function renderRequestsList(docs) {
+            const container = document.getElementById('requestsList');
+            if (docs.length === 0) { container.innerHTML = '<p class="text-center text-gray-500">No requests found</p>'; return; }
+            container.innerHTML = '';
+            docs.forEach(doc => {
+                const r = doc.data();
+                const time = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleString() : 'Just now';
+                container.innerHTML += `<div class="card"><div class="flex items-center justify-between mb-3"><div><span class="font-medium">${r.userName}</span><span class="text-sm text-gray-400 ml-2">${r.userPhone}</span></div><span class="status-badge status-${r.status}">${r.status}</span></div><div class="text-sm text-gray-400 mb-3"><p><strong>Type:</strong> ${r.type}</p>${r.jobType ? `<p><strong>Job:</strong> ${r.jobType}</p>` : ''}${r.taskTitle ? `<p><strong>Task:</strong> ${r.taskTitle}</p>` : ''}${r.walletType ? `<p><strong>Wallet:</strong> ${r.walletType}</p>` : ''}${r.transactionId ? `<p><strong>TXN ID:</strong> ${r.transactionId}</p>` : ''}${r.details ? `<p><strong>Details:</strong> ${r.details}</p>` : ''}${r.method ? `<p><strong>Method:</strong> ${r.method} - ${r.number}</p>` : ''}<p><strong>Amount:</strong> ${r.amount} TK</p><p class="text-xs mt-2">${time}</p></div><div class="flex gap-2">${r.status === 'pending' ? `<button onclick="approveRequest('${doc.id}')" class="btn-gold flex-1 py-2 text-sm"><i class="fas fa-check mr-1"></i>Approve</button><button onclick="rejectRequest('${doc.id}')" class="flex-1 py-2 bg-red-500/20 text-red-500 rounded-xl text-sm hover:bg-red-500 hover:text-white transition"><i class="fas fa-times mr-1"></i>Reject</button>` : `<button onclick="deleteRequest('${doc.id}')" class="w-full py-2 bg-gray-700 text-gray-300 rounded-xl text-sm hover:bg-red-500 hover:text-white transition"><i class="fas fa-trash mr-1"></i>Delete</button>`}</div></div>`;
+            });
+        }
+
+        window.filterRequests = async (filter) => {
+            const buttons = document.querySelectorAll('.request-filter');
+            buttons.forEach(b => { b.classList.remove('active', 'bg-green-500', 'text-black'); b.classList.add('bg-gray-800', 'text-gray-400'); });
+            event.target.classList.add('active', 'bg-green-500', 'text-black');
+            event.target.classList.remove('bg-gray-800', 'text-gray-400');
+            let query = db.collection('requests');
+            if (filter !== 'all') query = query.where('type', '==', filter);
+            const snapshot = await query.get();
+            const docs = [];
+            snapshot.forEach(d => { if(d.data().status !== 'pending') docs.push(d); });
+            renderRequestsList(docs);
+        };
+
+        async function approveRequest(requestId) {
+            const reqRef = db.collection('requests').doc(requestId);
+            const reqDoc = await reqRef.get();
+            const r = reqDoc.data();
+            await reqRef.update({ status: 'approved' });
+            if (r.type === 'activation') {
+                const userRef = db.collection('users').doc(r.userId);
+                await userRef.update({ isActive: true });
+                const userDoc = await userRef.get();
+                const userData = userDoc.data();
+                if (userData.referredBy) {
+                    const referrerSnap = await db.collection('users').where('referralCode', '==', userData.referredBy).get();
+                    if (!referrerSnap.empty) {
+                        const bonus = appSettingsCache?.referBonus || 10;
+                        await referrerSnap.docs[0].ref.update({ 'wallets.refer': firebase.firestore.FieldValue.increment(bonus), 'stats.inactiveRefers': firebase.firestore.FieldValue.increment(-1), 'stats.activeRefers': firebase.firestore.FieldValue.increment(1) });
+                    }
+                }
+            } else if (r.type === 'job' || r.type === 'task') {
+                const walletType = r.type === 'task' ? 'task' : r.jobType;
+                await db.collection('users').doc(r.userId).update({ [`wallets.${walletType}`]: firebase.firestore.FieldValue.increment(r.amount) });
+                const settings = appSettingsCache?.jobSettings?.[walletType] || {};
+                const commission = settings.commission || 0;
+                if (commission > 0) {
+                    const userDoc = await db.collection('users').doc(r.userId).get();
+                    const referredBy = userDoc.data().referredBy;
+                    if (referredBy) {
+                        const referrerSnap = await db.collection('users').where('referralCode', '==', referredBy).get();
+                        if (!referrerSnap.empty) await referrerSnap.docs[0].ref.update({ 'wallets.refer': firebase.firestore.FieldValue.increment(commission) });
+                    }
+                }
+            }
+            await db.collection('activities').add({ message: `Approved: ${r.type} - ${r.amount} TK`, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            updateAdminStats(); loadRequestsList();
+            showToast('Request Approved!', 'success');
+        }
+
+        async function rejectRequest(requestId) {
+            const reqRef = db.collection('requests').doc(requestId);
+            const r = (await reqRef.get()).data();
+            await reqRef.update({ status: 'rejected' });
+            if (r.type === 'withdraw') await db.collection('users').doc(r.userId).update({ [`wallets.${r.walletType}`]: firebase.firestore.FieldValue.increment(r.amount) });
+            updateAdminStats(); loadRequestsList();
+            showToast('Request Rejected!', 'warning');
+        }
+
+        async function deleteRequest(requestId) {
+            if (!confirm('Delete history?')) return;
+            await db.collection('requests').doc(requestId).delete();
+            loadRequestsList();
+            showToast('History deleted!', 'success');
+        }
+
+        // ===== ADMIN TASKS =====
+        async function loadAdminTasks() {
+            const container = document.getElementById('adminTaskList');
+            container.innerHTML = '<div class="loading-spinner"></div>';
+            const snapshot = await db.collection('tasks').get();
+            if (snapshot.empty) { container.innerHTML = '<p class="text-center text-gray-500">No tasks added yet.</p>'; return; }
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const t = doc.data();
+                container.innerHTML += `<div class="card bg-gray-900 flex flex-col md:flex-row justify-between items-start md:items-center gap-3"><div><h4 class="font-semibold text-green-400">${t.title}</h4><p class="text-xs text-gray-400 mt-1">${t.notice}</p><p class="text-xs text-blue-400 mt-1 break-all"><i class="fas fa-link mr-1"></i>${t.link}</p><p class="text-xs text-green-400 mt-1">Reward: ${t.reward} TK</p></div><div class="flex items-center gap-2"><span class="status-badge ${t.status === 'active' ? 'status-approved' : 'status-pending'}">${t.status}</span><button onclick="toggleTaskStatus('${doc.id}', '${t.status}')" class="w-8 h-8 rounded-lg ${t.status === 'active' ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}"><i class="fas ${t.status === 'active' ? 'fa-pause' : 'fa-play'}"></i></button><button onclick="deleteTask('${doc.id}')" class="w-8 h-8 rounded-lg bg-red-500/20 text-red-500"><i class="fas fa-trash"></i></button></div></div>`;
+            });
+        }
+
+        async function addNewTask() {
+            const title = document.getElementById('newTaskTitle').value.trim();
+            const notice = document.getElementById('newTaskNotice').value.trim();
+            const link = document.getElementById('newTaskLink').value.trim();
+            const reward = parseInt(document.getElementById('newTaskReward').value);
+            if (!title || !notice || !link || !reward) { showToast('Please fill all task details!', 'error'); return; }
+            await db.collection('tasks').add({ title, notice, link, reward, status: 'active', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            document.getElementById('newTaskTitle').value = '';
+            document.getElementById('newTaskNotice').value = '';
+            document.getElementById('newTaskLink').value = '';
+            document.getElementById('newTaskReward').value = '';
+            loadAdminTasks();
+            showToast('Task Added!', 'success');
+        }
+
+        async function toggleTaskStatus(taskId, currentStatus) {
+            await db.collection('tasks').doc(taskId).update({ status: currentStatus === 'active' ? 'inactive' : 'active' });
+            loadAdminTasks();
+            showToast('Task updated!', 'success');
+        }
+
+        async function deleteTask(taskId) {
+            if (!confirm('Delete this task?')) return;
+            await db.collection('tasks').doc(taskId).delete();
+            loadAdminTasks();
+            showToast('Task Deleted!', 'success');
+        }
+
+        async function loadJobSettings() {
+            const doc = await db.collection('settings').doc('app').get();
+            const s = doc.exists ? doc.data() : {};
+            const j = s.jobSettings || {};
+            if(j.gmail) { document.getElementById('gmailRate').value = j.gmail.rate || 5; document.getElementById('gmailMinWithdraw').value = j.gmail.minWithdraw || 50; document.getElementById('gmailDailyLimit').value = j.gmail.dailyLimit || 10; document.getElementById('gmailStatus').value = j.gmail.status || 'active'; document.getElementById('gmailPassword').value = j.gmail.password || ''; document.getElementById('gmailCommission').value = j.gmail.commission || 0; }
+            if(j.refer) document.getElementById('referMinWithdraw').value = j.refer.minWithdraw || 50;
+            document.getElementById('referBonus').value = s.referBonus || 10;
+            if(j.salary) document.getElementById('salaryMinWithdraw').value = j.salary.minWithdraw || 50;
+            document.getElementById('activationFee').value = s.activationFee || 100;
+            if(j.task) document.getElementById('taskMinWithdraw').value = j.task.minWithdraw || 50;
+        }
+
+        async function saveJobSettings(type) {
+            const ref = db.collection('settings').doc('app');
+            const doc = await ref.get();
+            let cs = doc.exists ? doc.data() : {};
+            if (!cs.jobSettings) cs.jobSettings = {};
+            if (type === 'gmail') { cs.jobSettings.gmail = { rate: parseInt(document.getElementById('gmailRate').value) || 5, minWithdraw: parseInt(document.getElementById('gmailMinWithdraw').value) || 50, dailyLimit: parseInt(document.getElementById('gmailDailyLimit').value) || 10, status: document.getElementById('gmailStatus').value, password: document.getElementById('gmailPassword').value.trim(), commission: parseInt(document.getElementById('gmailCommission').value) || 0 }; }
+            else if (type === 'refer') { cs.jobSettings.refer = { minWithdraw: parseInt(document.getElementById('referMinWithdraw').value) || 50 }; cs.referBonus = parseInt(document.getElementById('referBonus').value) || 10; }
+            else if (type === 'salary') { cs.jobSettings.salary = { minWithdraw: parseInt(document.getElementById('salaryMinWithdraw').value) || 50 }; cs.activationFee = parseInt(document.getElementById('activationFee').value) || 100; }
+            else if (type === 'task') { cs.jobSettings.task = { minWithdraw: parseInt(document.getElementById('taskMinWithdraw').value) || 50 }; }
+            await ref.set(cs, { merge: true });
+            showToast('Settings Saved!', 'success');
+        }
+
+        async function loadWithdrawSettings() {
+            const doc = await db.collection('settings').doc('app').get();
+            const s = doc.exists ? doc.data() : {};
+            document.getElementById('bkashNumber').value = s.bkashNumber || '';
+            document.getElementById('nagadNumber').value = s.nagadNumber || '';
+            loadWithdrawRequestsList();
+        }
+
+        async function savePaymentMethods() {
+            await db.collection('settings').doc('app').set({ bkashNumber: document.getElementById('bkashNumber').value.trim(), nagadNumber: document.getElementById('nagadNumber').value.trim() }, { merge: true });
+            showToast('Payment Methods Saved!', 'success');
+        }
+
+        async function loadWithdrawRequestsList() {
+            const snapshot = await db.collection('requests').where('type', '==', 'withdraw').get();
+            const docs = snapshot.docs.sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
+            const container = document.getElementById('withdrawRequestsList');
+            container.innerHTML = '';
+            if (docs.length === 0) { container.innerHTML = '<p class="text-center text-gray-500">No requests</p>'; return; }
+            docs.forEach(doc => {
+                const r = doc.data();
+                const time = r.createdAt?.seconds ? new Date(r.createdAt.seconds * 1000).toLocaleString() : 'Just now';
+                container.innerHTML += `<div class="p-3 bg-gray-900 rounded-xl"><div class="flex items-center justify-between mb-2"><span class="font-medium">${r.userName}</span><span class="status-badge status-${r.status}">${r.status}</span></div><p class="text-sm text-gray-400">${r.method}: ${r.number}</p><p class="text-sm gold-text">${r.amount} TK</p><p class="text-xs text-gray-500">${time}</p>${r.status === 'pending' ? `<div class="flex gap-2 mt-2"><button onclick="approveRequest('${doc.id}')" class="btn-gold flex-1 py-1 text-sm">Approve</button><button onclick="rejectRequest('${doc.id}')" class="flex-1 py-1 bg-red-500/20 text-red-500 rounded-lg text-sm">Reject</button></div>` : `<button onclick="deleteRequest('${doc.id}')" class="w-full mt-2 py-1 bg-gray-700 text-gray-300 rounded-lg text-sm hover:bg-red-500 hover:text-white transition">Delete</button>`}</div>`;
+            });
+        }
+
+        async function loadAdminSettings() {
+            const doc = await db.collection('settings').doc('app').get();
+            const s = doc.exists ? doc.data() : {};
+            const b = s.salaryBonuses || { 5: 25, 10: 50, 15: 75, 20: 100 };
+            document.getElementById('salary5').value = b[5] || 25;
+            document.getElementById('salary10').value = b[10] || 50;
+            document.getElementById('salary15').value = b[15] || 75;
+            document.getElementById('salary20').value = b[20] || 100;
+        }
+
+        async function updateAdminCredentials() {
+            const username = document.getElementById('newAdminUsername').value.trim();
+            const password = document.getElementById('newAdminPassword').value.trim();
+            if (!username || !password) { showToast('All fields required!', 'error'); return; }
+            await db.collection('settings').doc('admin').set({ username, password });
+            showToast('Admin Credentials Updated!', 'success');
+        }
+
+        async function saveSalaryBonuses() {
+            await db.collection('settings').doc('app').set({ salaryBonuses: { 5: parseInt(document.getElementById('salary5').value) || 25, 10: parseInt(document.getElementById('salary10').value) || 50, 15: parseInt(document.getElementById('salary15').value) || 75, 20: parseInt(document.getElementById('salary20').value) || 100 } }, { merge: true });
+            showToast('Salary Bonuses Saved!', 'success');
+        }
+
+        async function resetAllData() {
+            if (!confirm('DANGER! Delete ALL data?')) return;
+            if (!confirm('Are you REALLY sure?')) return;
+            const del = async (col) => { const s = await db.collection(col).get(); const b = db.batch(); s.docs.forEach(d => b.delete(d.ref)); await b.commit(); };
+            await del('users'); await del('requests'); await del('activities'); await del('tasks'); await del('settings');
+            showToast('All data reset!', 'warning');
+            adminLogout();
+        }
+
+        async function deleteInactiveUsers() {
+            if (!confirm('Delete ALL unpaid users?')) return;
+            const snap = await db.collection('users').where('isActive', '==', false).get();
+            const batch = db.batch();
+            snap.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            updateAdminStats(); loadUsersList();
+            showToast(`${snap.size} Inactive Users Deleted!`, 'success');
+        }
+
+        // ===== INIT =====
+        async function checkLoginState() {
+            const userId = localStorage.getItem('currentUserId');
+            const adminLoggedIn = localStorage.getItem('adminLoggedIn');
+            
+            if (userId) {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    // ক্লাউড ডাটা ভেরিফিকেশন
+                    await verifyCloudData(userId);
+                    // ক্লাউড থেকে ফ্রেশ ডাটা লোড
+                    const freshDoc = await db.collection('users').doc(userId).get();
+                    currentUser = { id: freshDoc.id, ...freshDoc.data() };
+                    loadUserDashboard();
+                    return;
+                }
+            }
+            if (adminLoggedIn === 'true') { loadAdminPanel(); return; }
+            showPage('loginPage');
+            
+            const locked = await checkFullRegistrationLock();
+            if (locked) {
+                const regBtn = document.getElementById('registerTabBtn');
+                regBtn.disabled = true;
+                regBtn.textContent = 'Registered';
+            }
+        }
+
+        function checkReferralCode() {
+            const startapp = new URLSearchParams(window.location.search).get('startapp');
+            if (startapp && startapp.startsWith('REF')) {
+                document.getElementById('regReferral').value = startapp;
+                switchAuthTab('register');
+            }
+        }
+
+        checkLoginState();
+        checkReferralCode();
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { closeSidebar(); document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); }
+        });
+    </script>
+</body>
+</html>
